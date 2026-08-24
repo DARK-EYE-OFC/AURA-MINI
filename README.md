@@ -9,7 +9,7 @@ cp .env.example .env
 npm start
 ```
 
-On first start, scan the QR code printed in the terminal. For pairing-code login, set `PAIRING_NUMBER` to the full international number without `+` before starting. Session files are stored in `auth/` and are ignored by Git.
+On first start, set `PAIRING_NUMBER` to the full international number without `+`. The pairing code is logged in the terminal for entry in WhatsApp. Session files are stored in `auth/` and are ignored by Git.
 
 ## Environment
 

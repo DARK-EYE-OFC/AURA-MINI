@@ -2,9 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const readline = require('node:readline');
 const pino = require('pino');
-const qrTerminal = require('qrcode-terminal');
 const { commands, commandList, resolveCommand, runCommand } = require('./commands');
 
 const ROOT = __dirname;
@@ -59,10 +57,6 @@ function hasJpegMenu() {
 	} catch { return false; }
 }
 
-function createPrompt() {
-	return readline.createInterface({ input: process.stdin, output: process.stdout });
-}
-
 async function createBot() {
 	ensureStorage();
 	const baileys = require('@whiskeysockets/baileys');
@@ -80,11 +74,7 @@ async function createBot() {
 	});
 
 	socket.ev.on('creds.update', saveCreds);
-	socket.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
-		if (qr) {
-			console.log('\nScan this QR code with WhatsApp > Linked devices:\n');
-			qrTerminal.generate(qr, { small: true });
-		}
+	socket.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
 		if (connection === 'open') console.log(`AURA-MINI online with ${commandList.length} built-in commands.`);
 		if (connection === 'close') {
 			const code = lastDisconnect?.error?.output?.statusCode;
@@ -95,14 +85,13 @@ async function createBot() {
 		}
 	});
 
-	if (process.env.PAIRING_NUMBER && !state.creds.registered) {
+	if (!state.creds.registered && process.env.PAIRING_NUMBER) {
 		const number = process.env.PAIRING_NUMBER.replace(/\D/g, '');
-		const prompt = createPrompt();
 		await new Promise((resolve) => setTimeout(resolve, 1000));
-		try {
-			const code = await socket.requestPairingCode(number);
-			console.log(`Pairing code for ${number}: ${code}`);
-		} finally { prompt.close(); }
+		const code = await socket.requestPairingCode(number);
+		console.log(`Pairing code for ${number}: ${code}`);
+	} else if (!state.creds.registered) {
+		console.log('Set PAIRING_NUMBER to log in with a WhatsApp pairing code.');
 	}
 
 	const customCommands = loadCustomCommands();
